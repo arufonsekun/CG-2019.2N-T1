@@ -1,27 +1,54 @@
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+let world = () => {
+    
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    var renderer = new THREE.WebGLRenderer();
+    var elements = new Object();
 
-let renderer = new THREE.WebGLRenderer();
+    let init = () => {
 
-renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-document.body.appendChild(rendered.domElement);
+    }
 
-let geometry = new THREE.BoxGeometry(1,1,1);
-let material = new THREE.MeshBasicMaterial({color : 0x00ff00});
-let cube = new THREE.Mesh(geometry, material);
+    let createCube = () => {
+        let geometry = new THREE.BoxGeometry(1,1,1);
+        let material = new THREE.MeshBasicMaterial({color : 0x00ff00});
+        var cube = new THREE.Mesh(geometry, material);
 
-scene.add(cube);
+        scene.add(cube);
+        elements['cube'] = cube;
 
-camera.position.z = 5;
+        camera.position.z = 5;
+    }
 
-let animate = () => {
-    requestAnimationFrame(animate);
+    let createGround = () => {
+        
+    }
 
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    let updateScreen = () => {
+        
+        let animate = () => {
+            requestAnimationFrame(animate);
+        
+            elements['cube'].rotation.x += 0.01;
+            elements['cube'].rotation.y += 0.01;
+        
+            renderer.render(scene, camera);
+        };
+        animate();
 
-    renderer.render(scene, camera);
-};
+    }
 
-animate();
+    return {
+        init : () => init(),
+        updateScreen : () => updateScreen(),
+        createCube : () => createCube()
+    }
+}
+
+let minecraft = world();
+minecraft.init();
+minecraft.createCube();
+minecraft.updateScreen();
