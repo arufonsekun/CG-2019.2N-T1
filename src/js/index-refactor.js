@@ -7,6 +7,7 @@ let FlappyBird = () => {
     const MODEL_PATH = './src/models/scene.gltf';
     const GRASS_TEXTURE = './src/textures/grass.jpeg';
     const SKY_TEXTURE = './src/textures/sky.jpeg';
+    const SPACE = ' ';
     let scene = new THREE.Scene();
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     let renderer = new THREE.WebGLRenderer({antialias:true});
@@ -14,28 +15,55 @@ let FlappyBird = () => {
     let sun, groundTexture, groundMaterial, groundMesh, groundGeometry;
     let mousePointerX = 0;
     let mousePointerY = 0;
-    var birdModelMesh;
+    let birdModelMesh;
+    let rotation = 0.01;
+    let iteration = 0;
+    let pipes = new Array();
     
+    let spaceKeyHandler = (e) => {
+        if (e.key == SPACE) {
+            birdModelMesh.position.y += 10;
+            iteration = 1;
+            rotation = -0.01;
+        }
+    }
+
     let init  = () => {
-        camera.position.set(0,250,100);
+        camera.position.set(-670,250,10);
         let controls = new OrbitControls(camera, renderer.domElement);
         renderer.setSize(window.innerWidth, window.innerHeight);
         scene.background = new THREE.Color(0x0f0f0f);
         document.body.appendChild(renderer.domElement);
+        document.onkeypress = spaceKeyHandler;
     }
     
     let loadModelHandler = (model) => {
-        var birdModelMesh = model.scene.children[0];
-        birdModelMesh.position.z = -200;
+        birdModelMesh = model.scene.children[0];
+        //birdModelMesh.position.z = -200;
         birdModelMesh.scale.x = 0.51;
         birdModelMesh.scale.y = 0.51;
         birdModelMesh.scale.z = 0.51;
+        birdModelMesh.position.x = -500;
         scene.add(birdModelMesh);
         sunShine(birdModelMesh);
+        
+        return birdModelMesh;
     }
     
+    let createPipes = () => {
+        var geometry = new THREE.CylinderGeometry( 5, 5, 20, 32 );
+        var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+        var cylinder = new THREE.Mesh( geometry, material );
+        
+        cylinder.position = (0,100,0);
+
+        pipes.push(cylinder);
+
+        scene.add( cylinder );
+    }
+
     let loadBirdModel = () => {
-        loader.load(MODEL_PATH, loadModelHandler)
+        birdModelMesh = loader.load(MODEL_PATH, loadModelHandler)
     }
     
     let sunShine = (birdModel) => {
@@ -47,35 +75,33 @@ let FlappyBird = () => {
     }
     
     let ambientLight = () => {
-        let light = new THREE.SpotLight(0xffffff, 5, 1000);
-        light.position.set(200, 250, 500);
-        light.angle = 3;
-        light.penumbra = 0.5;
-        
-        light.castShadow = true;
-        light.shadow.mapSize.width = 1024;
-        light.shadow.mapSize.height = 1024;
-        
-        scene.add(light);
+
+        var lightRight = new THREE.AmbientLight(0xffffff);
+        // var lightLeft = new THREE.AmbientLight(0xf0ffff);
+
+        //lightLeft.position.z = -1000;
+
+        //scene.add(lightLeft);
+        scene.add( lightRight );
+    
     }
     
     let ground = () => {
-        groundTexture = new THREE.TextureLoader().load(GRASS_TEXTURE);
         groundGeometry = new THREE.PlaneBufferGeometry(2000, 2000);
-        groundMaterial = new THREE.MeshPhongMaterial({color : 0xffffff, map : groundTexture});
+        groundMaterial = new THREE.MeshPhongMaterial({ color : 0x6B8E23 });
         
         groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
         
         groundMesh.rotation.x = - Math.PI / 2;
-        groundMesh.material.map.repeat.set(8, 8);
-        groundMesh.material.map.wrapS = groundMesh.material.map.wrapT = THREE.RepeatWrapping;
         groundMesh.receiveShadow = true;
-        
         scene.add(groundMesh);
     }
 
     let animate = () => {
         requestAnimationFrame(animate);
+
+        birdModelMesh.position.y -= 1;
+        // birdModelMesh.rotation.y += rotation;
 
         renderer.render(scene, camera);
     }
