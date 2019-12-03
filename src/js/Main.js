@@ -2,66 +2,94 @@ import * as THREE from '../../lib/three.js-r110/build/three.module.js';
 import { GLTFLoader } from '../../lib/three.js-r110/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '../../lib/three.js-r110/examples/jsm/controls/OrbitControls.js';
 
-var Bird = () => {
+let Bird = (scene) => {
 
+    const BIRD_MODEL = './src/models/scene.gltf';
     let loader = new GLTFLoader();
     let birdMesh;
 
-    let loadModelHandler = (model) => {
-        let birdModelMesh = model.scene.children[0];
-        birdModelMesh.scale.x = 0.51;
-        birdModelMesh.scale.y = 0.51;
-        birdModelMesh.scale.z = 0.51;
-        birdModelMesh.position.x = -500;
-        scene.add(birdModelMesh);
-        sunShine(birdModelMesh);
+    let loadModelHandler = (model) =>
+    {
+        birdMesh = model.scene.children[0];
+        birdMesh.scale.x = 0.51;
+        birdMesh.scale.y = 0.51;
+        birdMesh.scale.z = 0.51;
+        birdMesh.position.x = -500;
+        scene.add(birdMesh);
         
-        return birdModelMesh;
+        focusSpotLight(birdMesh);
+
+        return birdMesh;
     }
 
-    let loadBirdModel = (modelPath) => {
-        birdMesh = loader.load(modelPath, loadModelHandler)
+    let focusSpotLight = (birdModel) => {
+        let spotLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        spotLight.position.set( 0, 1, 0 );
+        spotLight.castShadow = true;
+        spotLight.target = birdModel;
+        scene.add(spotLight);
     }
 
-    let getBird = () => {
+    let loadBirdModel = () =>
+    {
+        birdMesh = loader.load(BIRD_MODEL, loadModelHandler);
+    }
+
+    let fall = (y) =>
+    {
+        birdMesh.position.y -= y;
+    }
+
+    let climb = (y) =>
+    {
+        birdMesh.position.y += y;
+    }
+
+    let getBird = () =>
+    {
         return birdMesh;
     }
 
     return {
         getBird : () => getBird(),
-        init : (modelPath) => loadBirdModel(modelPath) 
+        init : () => loadBirdModel(),
+        fall : (y) => fall(y),
+        climb : (x) => climb(x)
     }
 }
 
 let Game = () => {
 
-    const MODEL_PATH = './src/models/scene.gltf';
     const SPACE = ' ';
 
     let scene = new THREE.Scene();
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    let renderer = new THREE.WebGLRenderer({antialias:true});
-    let loader = new GLTFLoader();
+    let renderer = new THREE.WebGLRenderer({antialias:true}), bird;
     
     let sun, groundMaterial, groundMesh, groundGeometry;
-    let controls, bird;
+    let controls;
     
     let spaceKeyHandler = (e) => {
-        if (e.key == SPACE) { console.log("Teclou espaço"); }
+        if (e.key == SPACE)
+        { 
+            bird.climb(10);
+        }
     }
 
     let init  = () => {
         
-        camera.position.set(-670,250,10);
+        camera.position.set(-320.6, 164.2, 541.9);
         controls = new OrbitControls(camera, renderer.domElement);
 
         renderer.setSize(window.innerWidth, window.innerHeight);
         scene.background = new THREE.Color(0x0f0f0f);
         
+        bird = Bird(scene);
+        bird.init();
+
         document.body.appendChild(renderer.domElement);
         document.onkeypress = spaceKeyHandler;
 
-        bird = Bird();
     }
     
     let sunShine = (birdModel) => {
@@ -92,6 +120,8 @@ let Game = () => {
 
     let animate = () => {
         requestAnimationFrame(animate);
+
+        if (bird) { bird.fall(1.5); }
 
         renderer.render(scene, camera);
     }
