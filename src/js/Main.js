@@ -5,8 +5,9 @@ import { OrbitControls } from '../../lib/three.js-r110/examples/jsm/controls/Orb
 let Bird = (scene) => {
 
     const BIRD_MODEL = './src/models/scene.gltf';
+    const POINTING_GROUND = 1.55;
     let loader = new GLTFLoader();
-    let birdMesh;
+    let birdMesh, birdNewTheta;
 
     let loadModelHandler = (model) =>
     {
@@ -14,6 +15,7 @@ let Bird = (scene) => {
         birdMesh.scale.x = 0.51;
         birdMesh.scale.y = 0.51;
         birdMesh.scale.z = 0.51;
+        birdMesh.position.y = 100;
         birdMesh.position.x = -500;
         scene.add(birdMesh);
         
@@ -37,9 +39,8 @@ let Bird = (scene) => {
 
     let fall = (y) =>
     {
-        if (birdMesh) {
+        if (birdMesh && birdMesh.position.y > 0) {
             birdMesh.position.y -= y;
-            birdMesh.rotation.y += 0.1;
         }
     }
 
@@ -48,10 +49,19 @@ let Bird = (scene) => {
         if (birdMesh) birdMesh.position.y += y;
     }
 
+    let rotate = (tetha) => {
+
+        birdNewTheta = birdMesh.rotation.y + tetha;
+
+        if (birdNewTheta < 1.55 && birdNewTheta > -0.48)
+            birdMesh.rotation.y += tetha;
+    }
+
     return {
         init : () => loadBirdModel(),
         fall : (y) => fall(y),
-        climb : (x) => climb(x)
+        climb : (x) => climb(x), 
+        rotate : (tetha) => rotate(tetha)
     }
 }
 
@@ -97,14 +107,24 @@ let Game = () => {
     
     let sun, groundMaterial, groundMesh, groundGeometry;
     let controls, bird, pipe;
+    let birdRotation = 0.0275;
+    let climb = false, speed = 1.5;
+    let climbs = 0;
     
     let spaceKeyHandler = (e) => {
         
         if (e.key == SPACE) 
         {
-            bird.climb(10);
+            climb = true;
+            climbs++;
+            birdRotation = 0.0275;
+            speed = 1.5;
         }
 
+        if (e.key == 'r')
+        {
+            bird.rotate(birdRotation);
+        }
     }
 
     let createControls = () => {
@@ -169,11 +189,31 @@ let Game = () => {
         scene.add(groundMesh);
     }
 
+    let background = () => {
+
+
+
+    }
+
     let animate = () => {
         requestAnimationFrame(animate);
 
-        bird.fall(1.5);
-        pipe.move(1.5);
+        if (climb && climbs) {
+            bird.climb(3.5);
+            bird.rotate(-0.058);
+            climbs++;
+        }
+        
+        else {
+            bird.fall(speed);
+            bird.rotate(birdRotation);
+            birdRotation += 0.0001;
+            speed += 0.1;
+        }
+
+        if (climbs >= 7)
+            climbs = 0;
+        // pipe.move(1.5);
 
         renderer.render(scene, camera);
     }
