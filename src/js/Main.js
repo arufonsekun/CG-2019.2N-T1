@@ -100,12 +100,13 @@ let Pipe = (scene, opening) => {
 let Game = () => {
 
     const SPACE = ' ';
+    const BACKGROUND = './src/textures/background.jpeg';
 
     let scene = new THREE.Scene();
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     let renderer = new THREE.WebGLRenderer({antialias:true});
     
-    let sun, groundMaterial, groundMesh, groundGeometry;
+    let groundMaterial, groundMesh, groundGeometry;
     let controls, bird, pipe;
     let birdRotation = 0.0275;
     let climb = false, speed = 1.5;
@@ -119,6 +120,8 @@ let Game = () => {
             climbs++;
             birdRotation = 0.0275;
             speed = 1.5;
+
+            console.log(camera.position.x + " " + camera.position.y + " " + camera.position.z);
         }
 
         if (e.key == 'r')
@@ -135,7 +138,7 @@ let Game = () => {
 
     let setDefaultSettings = () => {
 
-        camera.position.set(-320.6, 164.2, 541.9);
+        camera.position.set(-64.44076875713192, 123.61714143342792, 667.482279868698);
         renderer.setSize(window.innerWidth, window.innerHeight);
         scene.background = new THREE.Color(0x0f0f0f);
 
@@ -165,7 +168,7 @@ let Game = () => {
         pipe = Pipe(scene, 100);
         pipe.init();
 
-        console.log(pipe);
+        background();
 
         addListeners();
         createCanvas();
@@ -191,7 +194,22 @@ let Game = () => {
 
     let background = () => {
 
+        let backgroundTexture = new THREE.TextureLoader().load(BACKGROUND);
+        let backgroundGeometry = new THREE.PlaneGeometry(2000, 2000);
+        let backgroundMaterial = new THREE.MeshPhongMaterial({color : 0xffffff, map : backgroundTexture});
 
+        let background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+
+        background.position.z = -300;
+        background.scale.x = 0.2;
+        background.scale.y = 0.2;
+        background.scale.z = 0.2;
+        console.log(background);
+
+        //background.rotation.x = - Math.PI / 2;
+        //background.rotation.y = Math.PI / 2;
+
+        scene.add(background);
 
     }
 
