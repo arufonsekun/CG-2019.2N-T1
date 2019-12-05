@@ -100,6 +100,7 @@ let Pipe = (scene, opening) => {
 let Game = () => {
 
     const SPACE = ' ';
+    const BACKGROUND = './src/textures/background.jpeg';
 
     let scene = new THREE.Scene();
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -165,7 +166,7 @@ let Game = () => {
         pipe = Pipe(scene, 100);
         pipe.init();
 
-        console.log(pipe);
+        background();
 
         addListeners();
         createCanvas();
@@ -191,7 +192,18 @@ let Game = () => {
 
     let background = () => {
 
+        let backgroundTexture = new THREE.TextureLoader().load(BACKGROUND);
+        let backgroundGeometry = new THREE.PlaneGeometry(2000, 2000);
+        let backgroundMaterial = new THREE.MeshPhongMaterial({color : 0xffffff, map : backgroundTexture});
 
+        let background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+
+        background.position.z = -300;
+
+        //background.rotation.x = - Math.PI / 2;
+        //background.rotation.y = Math.PI / 2;
+
+        scene.add(background);
 
     }
 
