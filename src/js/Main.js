@@ -1,35 +1,33 @@
 import * as THREE from '../../lib/three.js-r110/build/three.module.js';
-import { GLTFLoader } from '../../lib/three.js-r110/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from '../../lib/three.js-r110/examples/jsm/controls/OrbitControls.js';
+import { FBXLoader } from '../../lib/three.js-r110/examples/jsm/loaders/FBXLoader.js';
 
 let Bird = (scene) => {
 
-    const BIRD_MODEL = './src/models/scene.gltf';
+    const BIRD_MODEL = './src/models/flappy.fbx';
+    const BIRD_TEXTURE = './src/textures/flappy-bird.jpeg';
     const POINTING_GROUND = 1.55;
-    let loader = new GLTFLoader();
+    let loader = new FBXLoader();
     let birdMesh, birdNewTheta;
 
     let loadModelHandler = (model) =>
     {
-        birdMesh = model.scene.children[0];
-        birdMesh.scale.x = 0.51;
-        birdMesh.scale.y = 0.51;
-        birdMesh.scale.z = 0.51;
-        birdMesh.position.y = 100;
-        birdMesh.position.x = -500;
-        scene.add(birdMesh);
+        let texture = new THREE.TextureLoader().load(BIRD_TEXTURE);
         
-        focusSpotLight(birdMesh);
+        model.traverse(function(child) {
+            if (child.isMesh) {
+                child.material = new THREE.MeshBasicMaterial({ map : texture })
+            }
+        });
 
-        return birdMesh;
-    }
+        model.position.y = 100;
+        model.position.x = -400;
+        model.rotation.y = - Math.PI / 2;
+        model.scale.set(0.2, 0.2, 0.2);
 
-    let focusSpotLight = (birdModel) => {
-        let spotLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        spotLight.position.set( 0, 1, 0 );
-        spotLight.castShadow = true;
-        spotLight.target = birdModel;
-        scene.add(spotLight);
+        birdMesh = model;
+
+        scene.add(model);
     }
 
     let loadBirdModel = () =>
@@ -44,6 +42,10 @@ let Bird = (scene) => {
         }
     }
 
+    let moveForwards = (x) => {
+        birdMesh.position.x += x;
+    }
+
     let climb = (y) =>
     {
         if (birdMesh) birdMesh.position.y += y;
@@ -51,9 +53,18 @@ let Bird = (scene) => {
 
     let rotate = (tetha) => {
 
-        birdNewTheta = birdMesh.rotation.y + tetha;
+        console.log(birdMesh.rotation.x);
+        console.log(birdMesh.rotation.y);
+        console.log(birdMesh.rotation.z);
+        //birdMesh.rotation.x -= 0.101;
+        birdMesh.rotation.y += 0.101;
+        // birdMesh.rotation.z -= 0.101;
 
-        if (birdNewTheta < 1.55 && birdNewTheta > -0.48)
+
+        if (birdMesh)
+            birdNewTheta = birdMesh.rotation.y + tetha;
+
+        if (birdNewTheta < -1.57 && birdNewTheta > -0.48)
             birdMesh.rotation.y += tetha;
     }
 
@@ -61,7 +72,8 @@ let Bird = (scene) => {
         init : () => loadBirdModel(),
         fall : (y) => fall(y),
         climb : (x) => climb(x), 
-        rotate : (tetha) => rotate(tetha)
+        rotate : (tetha) => rotate(tetha), 
+        moveForwards : (x) => moveForwards(x)
     }
 }
 
@@ -71,7 +83,7 @@ let Pipe = (scene, opening) => {
 
     let init = () =>
     {
-        let geometry = new THREE.CylinderGeometry( 40, 40, 200, 32 );
+        let geometry = new THREE.CylinderGeometry( 40, 40, 200, 100 );
         let material = new THREE.MeshBasicMaterial( {color: 0xeeeeee } );
 
         topPipe = new THREE.Mesh( geometry, material );
@@ -120,8 +132,7 @@ let Game = () => {
             climbs++;
             birdRotation = 0.0275;
             speed = 1.5;
-
-            console.log(camera.position.x + " " + camera.position.y + " " + camera.position.z);
+            bird.rotate(-0.5);
         }
 
         if (e.key == 'r')
@@ -201,10 +212,6 @@ let Game = () => {
         let background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
 
         background.position.z = -300;
-        background.scale.x = 0.2;
-        background.scale.y = 0.2;
-        background.scale.z = 0.2;
-        console.log(background);
 
         //background.rotation.x = - Math.PI / 2;
         //background.rotation.y = Math.PI / 2;
@@ -218,20 +225,22 @@ let Game = () => {
 
         if (climb && climbs) {
             bird.climb(3.5);
-            bird.rotate(-0.058);
+            // bird.rotate(-0.058);
             climbs++;
+            console.log("miaau");
         }
         
         else {
             bird.fall(speed);
-            bird.rotate(birdRotation);
+            // bird.rotate(birdRotation);
             birdRotation += 0.0001;
             speed += 0.1;
         }
 
         if (climbs >= 7)
             climbs = 0;
-        // pipe.move(1.5);
+        
+        pipe.move(1.5);
 
         renderer.render(scene, camera);
     }
