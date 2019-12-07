@@ -19,10 +19,12 @@ let Bird = (scene) => {
                 child.material = new THREE.MeshBasicMaterial({ map : texture })
             }
         });
+        model.rotation.z = 90 * Math.PI/180;
+        model.rotation.x = 90 * Math.PI/180;
+        model.rotation.y = -90 * Math.PI/180;
 
         model.position.y = 100;
         model.position.x = -400;
-        model.rotation.y = - Math.PI / 2;
         model.scale.set(0.2, 0.2, 0.2);
 
         birdMesh = model;
@@ -53,18 +55,10 @@ let Bird = (scene) => {
 
     let rotate = (tetha) => {
 
-        console.log(birdMesh.rotation.x);
-        console.log(birdMesh.rotation.y);
-        console.log(birdMesh.rotation.z);
-        //birdMesh.rotation.x -= 0.101;
-        birdMesh.rotation.y += 0.101;
-        // birdMesh.rotation.z -= 0.101;
-
-
         if (birdMesh)
             birdNewTheta = birdMesh.rotation.y + tetha;
 
-        if (birdNewTheta < -1.57 && birdNewTheta > -0.48)
+        if (birdNewTheta < -1.22 && birdNewTheta > -3.12)
             birdMesh.rotation.y += tetha;
     }
 
@@ -132,7 +126,7 @@ let Game = () => {
             climbs++;
             birdRotation = 0.0275;
             speed = 1.5;
-            bird.rotate(-0.5);
+            bird.rotate(0.058);
         }
 
         if (e.key == 'r')
@@ -225,16 +219,15 @@ let Game = () => {
 
         if (climb && climbs) {
             bird.climb(3.5);
-            // bird.rotate(-0.058);
+            bird.rotate(0.058);
             climbs++;
-            console.log("miaau");
         }
         
         else {
             bird.fall(speed);
-            // bird.rotate(birdRotation);
-            birdRotation += 0.0001;
-            speed += 0.1;
+            bird.rotate(-birdRotation);
+            birdRotation += 0.00055;
+            speed += 0.3;
         }
 
         if (climbs >= 7)
