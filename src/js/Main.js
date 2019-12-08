@@ -25,12 +25,8 @@ let Bird = (scene) => {
         model.rotation.x = 90 * Math.PI/180;
         model.rotation.y = -90 * Math.PI/180;
 
-        model.position.x = -400;
-        model.position.z = 100;
-        model.position.y = 200;
-
+        model.position.set(-400, 200, 100);
         model.scale.set(0.1, 0.1, 0.1);
-
         birdMesh = model;
 
         scene.add(model);
@@ -147,7 +143,7 @@ let Game = () => {
     let controls, bird, pipe;
     let birdRotation = 0.0275;
     let climb = false, speed = 1.5;
-    let climbs = 0;
+    let climbs = 0, collided = false, dot;
     let pipes = new Array();
     let openings = [150, 200, 250, 300, 350, 100, 404, 600, 330, 320];
     
@@ -221,27 +217,6 @@ let Game = () => {
             initialPos += 210;
         }
 
-        /*
-        let pipe1 = Pipe(scene, 50, window.innerHeight, 150, 900.5);
-        pipe1.init();
-        pipes.push(pipe1);
-
-        let pipe2 = Pipe(scene, 100, window.innerHeight, 150, 900.5);
-        pipe2.init();
-        pipes.push(pipe2);
-        
-        let pipe3 = Pipe(scene, 150, window.innerHeight, 150, 1100.5);
-        pipe3.init();
-        pipes.push(pipe3);
-        
-        let pipe4 = Pipe(scene, 200, window.innerHeight, 150, 1300.5);
-        pipe4.init();
-        pipes.push(pipe4);
-        
-        let pipe5 = Pipe(scene, 250, window.innerHeight, 150, 1500.5);
-        pipe5.init();
-        pipes.push(pipe5);*/
-
         background();
 
         addListeners();
@@ -282,10 +257,18 @@ let Game = () => {
         scene.add(background);
     }
 
+    let sphereHelper = () => {
+        var geometry = new THREE.SphereGeometry( 5, 32, 32 );
+        var material = new THREE.MeshBasicMaterial( {color: 0x000000} );
+        var sphere = new THREE.Mesh( geometry, material );
+        sphere.position.set(-375, 200, 100);
+        scene.add( sphere );
+    }
+
     let animate = () => {
         requestAnimationFrame(animate);
 
-        if (climb && climbs) {
+        /*if (climb && climbs) {
             bird.climb(3.5);
             bird.rotate(0.058);
             climbs++;
@@ -305,7 +288,7 @@ let Game = () => {
         for (let pipe of pipes)
         {
             pipe.move(2);
-        }
+        }*/
 
         renderer.render(scene, camera);
     }
@@ -314,7 +297,8 @@ let Game = () => {
         init : () => init(),
         ground : () => ground(),
         start : () => animate(),
-        ambientLight: () => ambientLight()
+        ambientLight: () => ambientLight(),
+        sphereHelper : () => sphereHelper()
     }
 }
 
@@ -323,3 +307,4 @@ game.init();
 game.ambientLight();
 game.ground();
 game.start();
+game.sphereHelper();
