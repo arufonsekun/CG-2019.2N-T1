@@ -11,6 +11,7 @@ let Bird = (scene) => {
     let loader = new FBXLoader();
     let birdMesh, birdNewTheta, birdBox;
     let birdHeight, birdWidth;
+    var birdDimentions;
 
     let loadModelHandler = (model) =>
     {
@@ -30,17 +31,15 @@ let Bird = (scene) => {
         model.scale.set(0.1, 0.1, 0.1);
         birdMesh = model;
 
-        scene.add(model);
-
         birdBox = new THREE.Box3().setFromObject(model);
-        birdWidth = birdBox.getSize().x;
-        birdHeight = birdBox.getSize().y;
-        // console.log(birdBox.getSize().y);
+        scene.add(model);
+        birdDimentions = birdBox.getSize();
     }
 
     let loadBirdModel = () =>
     {
         loader.load(BIRD_MODEL, loadModelHandler);
+        
     }
 
     let fall = (y) =>
@@ -73,11 +72,13 @@ let Bird = (scene) => {
     }
 
     let getHeight = () => {
-        return birdHeight;
+        if (!birdDimentions) return 0;
+        return birdDimentions.y;
     }
 
     let getWidth = () => {
-        return birdWidth;
+        if (!birdDimentions) return 0;
+        return birdDimentions.x;
     }
 
     let setZ = (z) => {
@@ -174,6 +175,7 @@ let Game = () => {
     const SPACE = ' ';
     const BACKGROUND = './src/textures/background.jpg';
     const LEFT_SCREEN_OUT = -1041;
+    const BIRD_HEIGHT = 48;
 
     let scene = new THREE.Scene();
     let camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 1, 1000);
@@ -187,26 +189,24 @@ let Game = () => {
     let pipes = new Array();
     let pipesIndexes = new Array();
     let openings = [150, 200, 250, 300, 350, 100, 404, 600, 330, 320];
+    let bottomPipeHeight = [350, 250, 100, 200, 150, 275, 180, 385, 190, 160];
     let frontPipe = null;
-    let PIPE_RADIUS = 40;
-    let birdWidth, birdHeight;
+    let PIPE_RADIUS = 40, sphere = null;
+    let birdWidth, birdHeight, endGame = false;
     
     let spaceKeyHandler = (e) => {
         
-        if (e.key == SPACE) 
+        if (!collided)
         {
-            climb = true;
-            climbs++;
-            birdRotation = 0.0275;
-            speed = 1.5;
-            bird.rotate(0.058);
-            bird.getHeight();
-            //pipes[0].move(-1.5);
-            //pipes[0].printX();
-
-            console.log("Pipe bottom y: " + pipeBottomY);
-            console.log("Pipe top y: " + pipeTopY);
-            console.log("Bird y: " + birdY);
+            if (e.key == SPACE) 
+            {
+                climb = true;
+                climbs++;
+                birdRotation = 0.0275;
+                speed = 1.5;
+                bird.rotate(0.058);
+                bird.getHeight();
+            }
         }
     }
 
@@ -252,10 +252,12 @@ let Game = () => {
         
         let pipe = null;
         let initialPos = 1041;
+        let randomNumber = 0;
 
         for (let i=0; i < 10; i++)
         {
-            pipe = Pipe(scene, 50, window.innerHeight, openings[Math.floor(Math.random() * 10)], initialPos);
+            randomNumber = Math.floor(Math.random() * 10);
+            pipe = Pipe(scene, bottomPipeHeight[randomNumber], window.innerHeight, openings[randomNumber], initialPos);
             pipe.init();
             pipes.push(pipe);
             pipesIndexes.push(i);
@@ -271,22 +273,11 @@ let Game = () => {
 
         bird = Bird(scene);
         bird.init();
+        
+        generatePipes();
+
         birdHeight = bird.getHeight();
         birdWidth = bird.getWidth();
-
-        generatePipes();
-        /*
-        let pipe1 = Pipe(scene, 50, window.innerHeight, 150, -335);	
-        pipe1.init();	
-        pipes.push(pipe1);
-        pipesIndexes.push(0);
-
-        let pipe2 = Pipe(scene, 50, window.innerHeight, 150, -335);	
-        pipe2.init();	
-        pipes.push(pipe2);
-        pipesIndexes.push(1);*/
-        
-        // generatePipes();
 
         background();
 
@@ -305,7 +296,7 @@ let Game = () => {
     {
         var geometry = new THREE.SphereGeometry( 5, 32, 32 );
         var material = new THREE.MeshBasicMaterial( {color: 0xffffff} );
-        var sphere = new THREE.Mesh( geometry, material );
+        sphere = new THREE.Mesh( geometry, material );
         sphere.position.set(-930, 200, 100);
         scene.add( sphere );
     }
@@ -350,10 +341,13 @@ let Game = () => {
 
         if(isOnTheBirdRange())
         {
-            if (birdY + birdHeight / 2 <= pipeBottomY)
-                collided = true;
-            else if(birdY + birdHeight / 2 >= pipeTopY)
-                collided = true;
+            if (birdY - BIRD_HEIGHT / 2 <= pipeBottomY)
+                collided = true, bird.setZ(110);
+            else if(birdY + BIRD_HEIGHT / 2 >= pipeTopY)
+                collided = true, bird.setZ(110);
+            endGame = collided;
+            // sphere.position.y = birdY - BIRD_HEIGHT / 2;
+            // console.log(birdHeight);
             // collided = (birdY + birdHeight / 2 <= pipeBottomY) || (birdY + birdHeight / 2 >= pipeTopY);// || (birdY + birdWidth / 2 <= pipeBottomY) || (birdY + birdWidth / 2 >= pipeTopY);
             // bird.setZ(150);
             /*
@@ -373,36 +367,44 @@ let Game = () => {
     let animate = () => {
         requestAnimationFrame(animate);
 
-        if (climb && climbs) {
-            bird.climb(3.5);
-            bird.rotate(0.058);
-            climbs++;
-            birdRotation = 0.0275;
-        }
+        if (!collided) {
+            if (climb && climbs) {
+                bird.climb(3.9);
+                bird.rotate(0.058);
+                climbs++;
+                birdRotation = 0.0275;
+            }
+            
+            else {
+                bird.fall(speed);
+                bird.rotate(-birdRotation);
+                birdRotation += 0.0055;
+                speed += 0.5;
+            }
+
+            if (climbs >= 7)
+                climbs = 0;
+            
+            if (pipes[pipesIndexes[0]].getX() < LEFT_SCREEN_OUT) {
+                pipes[pipesIndexes[0]].reset();
+                frontPipe = pipesIndexes.splice(0,1);
+                pipesIndexes.push(frontPipe[0]);
+            }
+            
         
-        else {
+            for (let pipeIndex of pipesIndexes)
+            {
+                pipes[pipeIndex].move(3.5);
+            }
+            checkCollision();
+        }
+
+        else
+        {
             bird.fall(speed);
             bird.rotate(-birdRotation);
             birdRotation += 0.0055;
-            speed += 0.5;
-        }
-
-        if (climbs >= 7)
-            climbs = 0;
-           
-        if (pipes[pipesIndexes[0]].getX() < LEFT_SCREEN_OUT) {
-            pipes[pipesIndexes[0]].reset();
-            frontPipe = pipesIndexes.splice(0,1);
-            pipesIndexes.push(frontPipe[0]);
-        }
-        
-        checkCollision();
-
-        if (!collided) {
-            for (let pipeIndex of pipesIndexes)
-            {
-                pipes[pipeIndex].move(2);
-            }
+            speed += 2.5;
         }
 
 
