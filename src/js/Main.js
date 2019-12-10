@@ -192,7 +192,7 @@ let Game = () => {
     let bottomPipeHeight = [350, 250, 100, 200, 150, 275, 180, 385, 190, 160];
     let frontPipe = null;
     let PIPE_RADIUS = 40, sphere = null;
-    let birdWidth, birdHeight, endGame = false;
+    let gameStart = false, score = 0, textMesh, climbing = true, endGame = false;
     
     let spaceKeyHandler = (e) => {
         
@@ -206,6 +206,8 @@ let Game = () => {
                 speed = 1.5;
                 bird.rotate(0.058);
                 bird.getHeight();
+                textMesh.position.z = 1000;
+                gameStart = true;
             }
         }
     }
@@ -265,6 +267,33 @@ let Game = () => {
         }
     }
 
+    let createText = () => {
+        var loader = new THREE.FontLoader();
+
+        loader.load( './../lib/three.js-r110/examples/fonts/helvetiker_regular.typeface.json',
+            function ( font ) {
+                var textGeometry = new THREE.TextGeometry( 'Press space bar to start!',
+                {
+                    font: font,
+                    size: 50,
+                    height: 5,
+                    curveSegments: 12,
+                    bevelEnabled: false,
+                    bevelThickness: 15,
+                    bevelSize: 8,
+                    bevelOffset: 0,
+                    bevelSegments: 5
+                });
+                let textMaterial = new THREE.MeshPhongMaterial({color:0x0000ff});
+                textMesh = new THREE.Mesh(textGeometry, textMaterial);
+               
+                textMesh.position.set(-750, 100, 100);
+
+                scene.add(textMesh);
+        });
+
+    }
+
     let init  = () => {
 
         createControls();
@@ -276,15 +305,19 @@ let Game = () => {
         
         generatePipes();
 
-        birdHeight = bird.getHeight();
-        birdWidth = bird.getWidth();
-
         background();
+        createText();
 
         addListeners();
         createCanvas();
     }
     
+    let loadScoreTextures = () => {
+        
+    }
+
+
+
     let ambientLight = () => {
 
         var lightRight = new THREE.AmbientLight(0xffffff);
@@ -342,72 +375,74 @@ let Game = () => {
         if(isOnTheBirdRange())
         {
             if (birdY - BIRD_HEIGHT / 2 <= pipeBottomY)
-                collided = true, bird.setZ(110);
+                collided = true, bird.setZ(200);
             else if(birdY + BIRD_HEIGHT / 2 >= pipeTopY)
-                collided = true, bird.setZ(110);
+                collided = true, bird.setZ(200);
             endGame = collided;
-            // sphere.position.y = birdY - BIRD_HEIGHT / 2;
-            // console.log(birdHeight);
-            // collided = (birdY + birdHeight / 2 <= pipeBottomY) || (birdY + birdHeight / 2 >= pipeTopY);// || (birdY + birdWidth / 2 <= pipeBottomY) || (birdY + birdWidth / 2 >= pipeTopY);
-            // bird.setZ(150);
-            /*
-            console.log("Pipe top Y: " + pipeTopY);
-            console.log("Pipe bottom Y: " + pipeBottomY);
-            console.log("Chegou no intervalo");
-
-            console.log("Pipe bottom y: " + pipeBottomY);
-            console.log("Pipe top y: " + pipeTopY);
-            console.log("Bird y: " + birdY);
-            */
-
         }
 
+    }
+
+    let birdAnimation = () => {
+        
+        if (bird.getY() >= 250) {
+            climbing = true;
+        }
+        if (bird.getY() <= 200 && climbing) {
+            climbing = false;
+        }
+        if (!climbing) {
+            bird.climb(1.5);
+        } else if (climbing) {
+            bird.fall(1.5);
+        }
+    
     }
 
     let animate = () => {
         requestAnimationFrame(animate);
 
-        if (!collided) {
-            if (climb && climbs) {
-                bird.climb(3.9);
-                bird.rotate(0.058);
-                climbs++;
-                birdRotation = 0.0275;
+        if (gameStart)
+        {            
+            if (!collided) {
+                if (climb && climbs) {
+                    bird.climb(3.9);
+                    bird.rotate(0.058);
+                    climbs++;
+                    birdRotation = 0.0275;
+                }
+                
+                else {
+                    bird.fall(speed);
+                    bird.rotate(-birdRotation);
+                    birdRotation += 0.0055;
+                    speed += 0.5;
+                }
+
+                if (climbs >= 7)
+                    climbs = 0;
+                
+                if (pipes[pipesIndexes[0]].getX() < LEFT_SCREEN_OUT) {
+                    pipes[pipesIndexes[0]].reset();
+                    frontPipe = pipesIndexes.splice(0,1);
+                    pipesIndexes.push(frontPipe[0]);
+                }
+                for (let pipeIndex of pipesIndexes)
+                {
+                    pipes[pipeIndex].move(3.5);
+                }
+                checkCollision();
             }
-            
+
             else {
                 bird.fall(speed);
-                bird.rotate(-birdRotation);
-                birdRotation += 0.0055;
-                speed += 0.5;
+                speed +=3;
             }
-
-            if (climbs >= 7)
-                climbs = 0;
-            
-            if (pipes[pipesIndexes[0]].getX() < LEFT_SCREEN_OUT) {
-                pipes[pipesIndexes[0]].reset();
-                frontPipe = pipesIndexes.splice(0,1);
-                pipesIndexes.push(frontPipe[0]);
-            }
-            
+        }
         
-            for (let pipeIndex of pipesIndexes)
-            {
-                pipes[pipeIndex].move(3.5);
-            }
-            checkCollision();
+        else {
+            birdAnimation();
         }
-
-        else
-        {
-            bird.fall(speed);
-            bird.rotate(-birdRotation);
-            birdRotation += 0.0055;
-            speed += 2.5;
-        }
-
-
 
         renderer.render(scene, camera);
     }
