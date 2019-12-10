@@ -193,6 +193,7 @@ let Game = () => {
     let frontPipe = null;
     let PIPE_RADIUS = 40, sphere = null;
     let gameStart = false, score = 0, textMesh, climbing = true, endGame = false;
+    let scoreMeshes = new Array(), previousScore = "0", currentScore = "0";
     
     let spaceKeyHandler = (e) => {
         
@@ -304,6 +305,7 @@ let Game = () => {
         bird.init();
         
         generatePipes();
+        loadScoreTextures();
 
         background();
         createText();
@@ -313,10 +315,30 @@ let Game = () => {
     }
     
     let loadScoreTextures = () => {
-        
+
+        let scoreTexture, scoreMaterial, scoreGeometry, scoreMesh;
+        let scoreTextureLoader = new THREE.TextureLoader();//.load(BACKGROUND);
+
+        for (let i=0; i < 10; i++) 
+        {
+            scoreTexture = scoreTextureLoader.load("./src/textures/" + i + ".png");
+            scoreGeometry = new THREE.PlaneGeometry(96, 144);
+            scoreMaterial = new THREE.MeshPhongMaterial({color : 0xffffff, map : scoreTexture});
+    
+            scoreMesh = new THREE.Mesh(scoreGeometry, scoreMaterial);
+            scoreMesh.scale.x = 0.5;
+            scoreMesh.scale.y = 0.5;
+            scoreMesh.position.x = -400;
+            scoreMesh.position.y = 300;
+            scoreMesh.position.z = 80
+            scoreMesh.name = i.toString();
+            scoreMeshes.push(scoreMesh);
+        }
+
+        scene.add(scoreMeshes[0]);
+
+        console.log(scoreMeshes);
     }
-
-
 
     let ambientLight = () => {
 
@@ -356,7 +378,7 @@ let Game = () => {
         let background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
 
         background.position.z = -300;
-        background.position.y = 280;
+        background.position.y = 315 ;
 
         scene.add(background);
     }
@@ -375,9 +397,9 @@ let Game = () => {
         if(isOnTheBirdRange())
         {
             if (birdY - BIRD_HEIGHT / 2 <= pipeBottomY)
-                collided = true, bird.setZ(200);
+                collided = true, bird.setZ(240);
             else if(birdY + BIRD_HEIGHT / 2 >= pipeTopY)
-                collided = true, bird.setZ(200);
+                collided = true, bird.setZ(240);
             endGame = collided;
         }
 
@@ -397,6 +419,32 @@ let Game = () => {
             bird.fall(1.5);
         }
     
+    }
+
+    let drawScore = () => {
+
+        let scoreNumber;
+
+        for (let number of previousScore)
+        {
+            scoreNumber = scene.getObjectByName(number);
+            if (scoreNumber) {
+                scene.remove(scoreNumber);
+            }
+        }
+
+        currentScore = score.toString();
+        previousScore = currentScore;
+        let pos = -400;
+        for (let number of currentScore)
+        {
+            scoreMeshes[parseInt(number)].position.x = pos;
+            scene.add(scoreMeshes[parseInt(number)]);
+            pos += 50;
+        }
+
+        // scoreString = score.toString();
+
     }
 
     let animate = () => {
@@ -426,6 +474,8 @@ let Game = () => {
                     pipes[pipesIndexes[0]].reset();
                     frontPipe = pipesIndexes.splice(0,1);
                     pipesIndexes.push(frontPipe[0]);
+                    score += 1;
+                    drawScore();
                 }
                 for (let pipeIndex of pipesIndexes)
                 {
