@@ -16,7 +16,7 @@ let Bird = (scene) => {
     let loadModelHandler = (model) =>
     {
         let texture = new THREE.TextureLoader().load(BIRD_TEXTURE);
-        
+
         model.traverse(function(child) {
             if (child.isMesh) {
                 child.material = new THREE.MeshBasicMaterial({ map : texture })
@@ -39,7 +39,7 @@ let Bird = (scene) => {
     let loadBirdModel = () =>
     {
         loader.load(BIRD_MODEL, loadModelHandler);
-        
+
     }
 
     let fall = (y) =>
@@ -88,8 +88,8 @@ let Bird = (scene) => {
     return {
         init : () => loadBirdModel(),
         fall : (y) => fall(y),
-        climb : (x) => climb(x), 
-        rotate : (tetha) => rotate(tetha), 
+        climb : (x) => climb(x),
+        rotate : (tetha) => rotate(tetha),
         moveForwards : (x) => moveForwards(x),
         getY : () => getY(),
         setZ : (z) => setZ(z),
@@ -105,7 +105,7 @@ let Pipe = (scene, heightBottom, heightTop, opening, x) => {
     let topPipe, bottomPipe;
     let originalX = null;
     let pipeOpening = opening;
-    
+
     if (!originalX)
         originalX = x;
 
@@ -120,10 +120,10 @@ let Pipe = (scene, heightBottom, heightTop, opening, x) => {
 
         bottomPipe.position.y =  heightBottom / 2;
         topPipe.position.y = bottomPipe.position.y + (heightBottom / 2) + (heightTop / 2) + opening;
-        
+
         bottomPipe.position.z = 100;
         topPipe.position.z = 100;
-        
+
         bottomPipe.position.x = x;
         topPipe.position.x = x;
 
@@ -180,7 +180,7 @@ let Game = () => {
     let scene = new THREE.Scene();
     let camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 1, 1000);
     let renderer = new THREE.WebGLRenderer({antialias:true});
-    
+
     let groundMaterial, groundMesh, groundGeometry;
     let controls, bird, pipeX, pipeBottomY, pipeTopY, birdY;
     let birdRotation = 0.0275;
@@ -192,14 +192,14 @@ let Game = () => {
     let bottomPipeHeight = [350, 250, 100, 200, 150, 275, 180, 385, 190, 160];
     let frontPipe = null;
     let PIPE_RADIUS = 40, sphere = null;
-    let gameStart = false, score = 0, textMesh, climbing = true, endGame = false;
-    let scoreMeshes = new Array(), previousScore = "0", currentScore = "0";
-    
+    let gameStart = false, score = 0, textMesh, scoreTextMesh, climbing = true, endGame = false;
+    let scoreMeshes = new Array();
+
     let spaceKeyHandler = (e) => {
-        
+
         if (!collided)
         {
-            if (e.key == SPACE) 
+            if (e.key == SPACE)
             {
                 climb = true;
                 climbs++;
@@ -210,6 +210,11 @@ let Game = () => {
                 textMesh.position.z = 1000;
                 gameStart = true;
             }
+        }
+        else if(bird.getY() < 26){
+            score = 0;
+            collided = false;
+            endGame = false;
         }
     }
 
@@ -240,19 +245,19 @@ let Game = () => {
     }
 
     let addListeners = () => {
-        
+
         document.onkeypress = spaceKeyHandler;
 
     }
 
     let createCanvas = () => {
-    
+
        document.body.appendChild(renderer.domElement);
 
     }
 
     let generatePipes = () => {
-        
+
         let pipe = null;
         let initialPos = 1041;
         let randomNumber = 0;
@@ -287,7 +292,7 @@ let Game = () => {
                 });
                 let textMaterial = new THREE.MeshPhongMaterial({color:0x0000ff});
                 textMesh = new THREE.Mesh(textGeometry, textMaterial);
-               
+
                 textMesh.position.set(-750, 100, 100);
 
                 scene.add(textMesh);
@@ -298,14 +303,14 @@ let Game = () => {
     let init  = () => {
 
         createControls();
-        
+
         setDefaultSettings();
 
         bird = Bird(scene);
         bird.init();
-        
+
         generatePipes();
-        loadScoreTextures();
+        updateScoreTextures();
 
         background();
         createText();
@@ -313,40 +318,44 @@ let Game = () => {
         addListeners();
         createCanvas();
     }
-    
-    let loadScoreTextures = () => {
 
-        let scoreTexture, scoreMaterial, scoreGeometry, scoreMesh;
-        let scoreTextureLoader = new THREE.TextureLoader();//.load(BACKGROUND);
+    let updateScoreTextures = () => {
 
-        for (let i=0; i < 10; i++) 
-        {
-            scoreTexture = scoreTextureLoader.load("./src/textures/" + i + ".png");
-            scoreGeometry = new THREE.PlaneGeometry(96, 144);
-            scoreMaterial = new THREE.MeshPhongMaterial({color : 0xffffff, map : scoreTexture});
-    
-            scoreMesh = new THREE.Mesh(scoreGeometry, scoreMaterial);
-            scoreMesh.scale.x = 0.5;
-            scoreMesh.scale.y = 0.5;
-            scoreMesh.position.x = -400;
-            scoreMesh.position.y = 300;
-            scoreMesh.position.z = 80
-            scoreMesh.name = i.toString();
-            scoreMeshes.push(scoreMesh);
-        }
+        scene.remove(scene.getObjectByName("score"));
 
-        scene.add(scoreMeshes[0]);
+        var loader = new THREE.FontLoader();
 
-        console.log(scoreMeshes);
+        loader.load( './../lib/three.js-r110/examples/fonts/helvetiker_regular.typeface.json',
+            function ( font ) {
+                var textGeometry = new THREE.TextGeometry( score.toString(),
+                {
+                    font: font,
+                    size: 50,
+                    height: 5,
+                    curveSegments: 12,
+                    bevelEnabled: false,
+                    bevelThickness: 15,
+                    bevelSize: 8,
+                    bevelOffset: 0,
+                    bevelSegments: 5
+                });
+                let scoreTextMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+                scoreTextMesh = new THREE.Mesh(textGeometry, scoreTextMaterial);
+
+                scoreTextMesh.position.set(-400, 350, 250);
+                scoreTextMesh.name = "score";
+                console.log(scoreTextMesh);
+
+                scene.add(scoreTextMesh);
+        });
+
     }
 
     let ambientLight = () => {
-
         var lightRight = new THREE.AmbientLight(0xffffff);
         scene.add(lightRight);
-    
     }
-    
+
     let sphereHelper = () =>
     {
         var geometry = new THREE.SphereGeometry( 5, 32, 32 );
@@ -359,12 +368,12 @@ let Game = () => {
     let ground = () => {
         groundGeometry = new THREE.PlaneBufferGeometry(2000, 1550);
         groundMaterial = new THREE.MeshPhongMaterial({ color : 0x8BC34A });
-        
+
         groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-        
+
         groundMesh.rotation.x = -Math.PI / 2;
         groundMesh.position.z = -100;
-        
+
         groundMesh.receiveShadow = true;
         scene.add(groundMesh);
     }
@@ -397,16 +406,16 @@ let Game = () => {
         if(isOnTheBirdRange())
         {
             if (birdY - BIRD_HEIGHT / 2 <= pipeBottomY)
-                collided = true, bird.setZ(240);
+                collided = true, bird.setZ(200), textMesh.position.z=250;
             else if(birdY + BIRD_HEIGHT / 2 >= pipeTopY)
-                collided = true, bird.setZ(240);
+                collided = true, bird.setZ(200), textMesh.position.z=250;
             endGame = collided;
         }
 
     }
 
     let birdAnimation = () => {
-        
+
         if (bird.getY() >= 250) {
             climbing = true;
         }
@@ -418,40 +427,20 @@ let Game = () => {
         } else if (climbing) {
             bird.fall(1.5);
         }
-    
+
     }
 
-    let drawScore = () => {
-
-        let scoreNumber;
-
-        for (let number of previousScore)
-        {
-            scoreNumber = scene.getObjectByName(number);
-            if (scoreNumber) {
-                scene.remove(scoreNumber);
-            }
-        }
-
-        currentScore = score.toString();
-        previousScore = currentScore;
-        let pos = -400;
-        for (let number of currentScore)
-        {
-            scoreMeshes[parseInt(number)].position.x = pos;
-            scene.add(scoreMeshes[parseInt(number)]);
-            pos += 50;
-        }
-
-        // scoreString = score.toString();
-
+    let checkIfHitTheGround = () => {
+        birdY = bird.getY();
+        collided = birdY < 27;
+        endGame = collided;
     }
 
     let animate = () => {
         requestAnimationFrame(animate);
 
         if (gameStart)
-        {            
+        {
             if (!collided) {
                 if (climb && climbs) {
                     bird.climb(3.9);
@@ -459,7 +448,7 @@ let Game = () => {
                     climbs++;
                     birdRotation = 0.0275;
                 }
-                
+
                 else {
                     bird.fall(speed);
                     bird.rotate(-birdRotation);
@@ -469,18 +458,19 @@ let Game = () => {
 
                 if (climbs >= 7)
                     climbs = 0;
-                
+
                 if (pipes[pipesIndexes[0]].getX() < LEFT_SCREEN_OUT) {
                     pipes[pipesIndexes[0]].reset();
                     frontPipe = pipesIndexes.splice(0,1);
                     pipesIndexes.push(frontPipe[0]);
                     score += 1;
-                    drawScore();
+                    updateScoreTextures();
                 }
                 for (let pipeIndex of pipesIndexes)
                 {
                     pipes[pipeIndex].move(3.5);
                 }
+                checkIfHitTheGround();
                 checkCollision();
             }
 
@@ -489,10 +479,11 @@ let Game = () => {
                 speed +=3;
             }
         }
-        
+
         else {
             birdAnimation();
         }
+
 
         renderer.render(scene, camera);
     }
