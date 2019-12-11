@@ -67,9 +67,6 @@ let Bird = (scene) => {
             birdMesh.rotation.y += tetha;
     }
 
-    let getY = () => {
-        return birdMesh.position.y;
-    }
 
     let getHeight = () => {
         if (!birdDimentions) return 0;
@@ -85,12 +82,22 @@ let Bird = (scene) => {
         birdMesh.position.z = z;
     }
 
+    let setY = (y) => {
+        birdMesh.position.y = y
+    }
+
+    let getY = () => {
+      return birdMesh.position.y;
+    }
+
+
     return {
         init : () => loadBirdModel(),
         fall : (y) => fall(y),
         climb : (x) => climb(x),
         rotate : (tetha) => rotate(tetha),
         moveForwards : (x) => moveForwards(x),
+        setY : (y) => setY(y),
         getY : () => getY(),
         setZ : (z) => setZ(z),
         getHeight : () => getHeight(),
@@ -146,6 +153,11 @@ let Pipe = (scene, heightBottom, heightTop, opening, x) => {
         bottomPipe.position.x = RIGHT_SCREEN_OUT;
     }
 
+    let setX = (x) => {
+        bottomPipe.position.x = x;
+        topPipe.position.x = x;
+    }
+
     let getX = () => {
         return topPipe.position.x;
     }
@@ -163,6 +175,7 @@ let Pipe = (scene, heightBottom, heightTop, opening, x) => {
         move : (x) => move(x),
         reset : () => reset(),
         getX : () => getX(),
+        setX : (x) => setX(x),
         getBottomY : () => getBottomY(),
         getTopY : () => getTopY(),
         printX : () => printX()
@@ -197,10 +210,8 @@ let Game = () => {
 
     let spaceKeyHandler = (e) => {
 
-        if (!collided)
-        {
-            if (e.key == SPACE)
-            {
+        if (e.key == SPACE) {
+            if (!collided) {
                 climb = true;
                 climbs++;
                 birdRotation = 0.0275;
@@ -209,12 +220,18 @@ let Game = () => {
                 bird.getHeight();
                 textMesh.position.z = 1000;
                 gameStart = true;
+                printCameraSettings();
             }
-        }
-        else if(bird.getY() < 26){
-            score = 0;
-            collided = false;
-            endGame = false;
+            else {
+                score = 0;
+                collided = false;
+                endGame = false;
+                gameStart = false;
+                bird.setY(220);
+                resetPipes();
+
+                console.log("perdeu e hito o espaço");
+            }
         }
     }
 
@@ -236,8 +253,8 @@ let Game = () => {
 
     let setDefaultSettings = () => {
 
-        camera.position.set(-313.90940756908446, 392.0034363179208, 558.0084337668025);
-        camera.rotation.set(-0.61, 0.001, 0.0001);
+        camera.position.set(-164.97475652336848, 505.03319820221066, 532.802501557092);
+        camera.rotation.set(-0.7381463293462468, 0.023758150866644467, 0.021607301637374027);
 
         renderer.setSize(window.innerWidth, window.innerHeight);
         scene.background = new THREE.Color(0x0f0f0f);
@@ -281,7 +298,7 @@ let Game = () => {
                 var textGeometry = new THREE.TextGeometry( 'Press space bar to start!',
                 {
                     font: font,
-                    size: 50,
+                    size: 70,
                     height: 5,
                     curveSegments: 12,
                     bevelEnabled: false,
@@ -294,13 +311,14 @@ let Game = () => {
                 textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
                 textMesh.position.set(-750, 100, 100);
+                textMesh.rotation.z = 0.01;
 
                 scene.add(textMesh);
         });
 
     }
 
-    let init  = () => {
+    let init = () => {
 
         createControls();
 
@@ -330,7 +348,7 @@ let Game = () => {
                 var textGeometry = new THREE.TextGeometry( score.toString(),
                 {
                     font: font,
-                    size: 50,
+                    size: 70,
                     height: 5,
                     curveSegments: 12,
                     bevelEnabled: false,
@@ -339,12 +357,11 @@ let Game = () => {
                     bevelOffset: 0,
                     bevelSegments: 5
                 });
-                let scoreTextMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+                let scoreTextMaterial = new THREE.MeshPhongMaterial({color:0xffffff});
                 scoreTextMesh = new THREE.Mesh(textGeometry, scoreTextMaterial);
 
-                scoreTextMesh.position.set(-400, 350, 250);
+                scoreTextMesh.position.set(-290, 350, 250);
                 scoreTextMesh.name = "score";
-                console.log(scoreTextMesh);
 
                 scene.add(scoreTextMesh);
         });
@@ -356,8 +373,7 @@ let Game = () => {
         scene.add(lightRight);
     }
 
-    let sphereHelper = () =>
-    {
+    let sphereHelper = () => {
         var geometry = new THREE.SphereGeometry( 5, 32, 32 );
         var material = new THREE.MeshBasicMaterial( {color: 0xffffff} );
         sphere = new THREE.Mesh( geometry, material );
@@ -436,11 +452,20 @@ let Game = () => {
         endGame = collided;
     }
 
+    let resetPipes = () => {
+
+        let pipeInitialPosition = 1041;
+
+        for (let pipeIndex of pipesIndexes) {
+            pipes[pipeIndex].setX(pipeInitialPosition);
+            pipeInitialPosition += 210;
+        }
+    }
+
     let animate = () => {
         requestAnimationFrame(animate);
 
-        if (gameStart)
-        {
+        if (gameStart) {
             if (!collided) {
                 if (climb && climbs) {
                     bird.climb(3.9);
@@ -470,8 +495,9 @@ let Game = () => {
                 {
                     pipes[pipeIndex].move(3.5);
                 }
-                checkIfHitTheGround();
+
                 checkCollision();
+                checkIfHitTheGround();
             }
 
             else {
