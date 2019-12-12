@@ -231,14 +231,12 @@ let Game = () => {
                 collided = false;
                 gameStart = false;
                 bird.setY(220);
-                bird.setZ(100)
                 hitTheGround = false;
+                textMesh.position.z = 250;
                 resetPipes();
                 updateScoreTextures();
-                textMesh.position.z = 100;
                 bird.resetRotation();
             }
-            // console.log(bird.getY());
         }
 
     }
@@ -422,8 +420,6 @@ let Game = () => {
 
     let checkCollision = () => {
 
-        console.log(pipesIndexes);
-
         pipeX = pipes[pipesIndexes[0]].getX() - PIPE_RADIUS;
         pipeBottomY = pipes[pipesIndexes[0]].getBottomY() * 2;
         pipeTopY = pipes[pipesIndexes[0]].getTopY();
@@ -436,6 +432,11 @@ let Game = () => {
             else if(birdY + BIRD_HEIGHT / 2 >= pipeTopY)
                 collided = true, bird.setZ(200), textMesh.position.z=250;
             endGame = collided;
+        }
+
+        if (hitTheGround) {
+            textMesh.position.z=250;
+
         }
 
     }
