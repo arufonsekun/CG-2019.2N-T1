@@ -152,7 +152,11 @@ let Pipe = (scene, heightBottom, heightTop, opening, x) => {
         console.log("Original x: " + originalX);
     }
 
-    let reset = () => {
+    let reset = (newOpening) => {
+
+        bottomPipe.position.y =  heightBottom / 2;
+        topPipe.position.y = bottomPipe.position.y + (heightBottom / 2) + (heightTop / 2) + opening;
+
         topPipe.position.x = RIGHT_SCREEN_OUT;
         bottomPipe.position.x = RIGHT_SCREEN_OUT;
     }
@@ -231,12 +235,14 @@ let Game = () => {
                 collided = false;
                 gameStart = false;
                 bird.setY(220);
+                bird.setZ(100);
                 hitTheGround = false;
                 textMesh.position.z = 250;
                 resetPipes();
                 updateScoreTextures();
                 bird.resetRotation();
             }
+            printCameraSettings();
         }
 
     }
@@ -259,8 +265,8 @@ let Game = () => {
 
     let setDefaultSettings = () => {
 
-        camera.position.set(-164.97475652336848, 505.03319820221066, 532.802501557092);
-        camera.rotation.set(-0.7381463293462468, 0.023758150866644467, 0.021607301637374027);
+        camera.position.set(-196.03760891447064, 512.7715022592989, 552.006609807958);
+        camera.rotation.set(-0.7497907400194789, -0.00005619221071956353, -0.00005232650489088279);
 
         renderer.setSize(window.innerWidth, window.innerHeight);
         scene.background = new THREE.Color(0x0f0f0f);
@@ -301,7 +307,7 @@ let Game = () => {
 
         loader.load( './../lib/three.js-r110/examples/fonts/helvetiker_regular.typeface.json',
             function ( font ) {
-                var textGeometry = new THREE.TextGeometry( 'Press space bar to start!',
+                var textGeometry = new THREE.TextGeometry( 'Press space bar to start',
                 {
                     font: font,
                     size: 70,
@@ -317,7 +323,7 @@ let Game = () => {
                 textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
                 textMesh.position.set(-750, 100, 100);
-                textMesh.rotation.z = 0.01;
+                textMesh.rotation.z = -0.01;
 
                 scene.add(textMesh);
         });
@@ -462,6 +468,7 @@ let Game = () => {
         let pipeInitialPosition = 1041;
 
         for (let pipeIndex of pipesIndexes) {
+            pipes[pipeIndex].reset(openings[Math.floor(Math.random() * 10)]);
             pipes[pipeIndex].setX(pipeInitialPosition);
             pipeInitialPosition += 210;
         }
@@ -484,7 +491,7 @@ let Game = () => {
                     bird.fall(speed);
                     bird.rotate(-birdRotation);
                     birdRotation += 0.0055;
-                    speed += 0.5;
+                    speed += 0.3;
                 }
 
                 hitTheGround = birdY == bird.getY();
