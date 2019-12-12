@@ -90,6 +90,9 @@ let Bird = (scene) => {
       return birdMesh.position.y;
     }
 
+    let resetRotation = () => {
+        birdMesh.rotation.y = -90 * Math.PI/180;
+    }
 
     return {
         init : () => loadBirdModel(),
@@ -101,7 +104,8 @@ let Bird = (scene) => {
         getY : () => getY(),
         setZ : (z) => setZ(z),
         getHeight : () => getHeight(),
-        getWidth : () => getWidth()
+        getWidth : () => getWidth(),
+        resetRotation : () => resetRotation()
     }
 }
 
@@ -206,7 +210,7 @@ let Game = () => {
     let frontPipe = null;
     let PIPE_RADIUS = 40, sphere = null;
     let gameStart = false, score = 0, textMesh, scoreTextMesh, climbing = true, endGame = false;
-    let scoreMeshes = new Array();
+    let scoreMeshes = new Array(), hitTheGround = false;
 
     let spaceKeyHandler = (e) => {
 
@@ -220,19 +224,23 @@ let Game = () => {
                 bird.getHeight();
                 textMesh.position.z = 1000;
                 gameStart = true;
-                printCameraSettings();
             }
-            else {
+
+            if (hitTheGround) {
                 score = 0;
                 collided = false;
-                endGame = false;
                 gameStart = false;
                 bird.setY(220);
+                bird.setZ(100)
+                hitTheGround = false;
                 resetPipes();
-
-                console.log("perdeu e hito o espaço");
+                updateScoreTextures();
+                textMesh.position.z = 100;
+                bird.resetRotation();
             }
+            // console.log(bird.getY());
         }
+
     }
 
     let printCameraSettings = () => {
@@ -414,6 +422,8 @@ let Game = () => {
 
     let checkCollision = () => {
 
+        console.log(pipesIndexes);
+
         pipeX = pipes[pipesIndexes[0]].getX() - PIPE_RADIUS;
         pipeBottomY = pipes[pipesIndexes[0]].getBottomY() * 2;
         pipeTopY = pipes[pipesIndexes[0]].getTopY();
@@ -446,12 +456,6 @@ let Game = () => {
 
     }
 
-    let checkIfHitTheGround = () => {
-        birdY = bird.getY();
-        collided = birdY < 27;
-        endGame = collided;
-    }
-
     let resetPipes = () => {
 
         let pipeInitialPosition = 1041;
@@ -467,6 +471,7 @@ let Game = () => {
 
         if (gameStart) {
             if (!collided) {
+                birdY = bird.getY();
                 if (climb && climbs) {
                     bird.climb(3.9);
                     bird.rotate(0.058);
@@ -480,6 +485,9 @@ let Game = () => {
                     birdRotation += 0.0055;
                     speed += 0.5;
                 }
+
+                hitTheGround = birdY == bird.getY();
+                collided = hitTheGround;
 
                 if (climbs >= 7)
                     climbs = 0;
@@ -497,11 +505,12 @@ let Game = () => {
                 }
 
                 checkCollision();
-                checkIfHitTheGround();
             }
 
             else {
+                birdY = bird.getY()
                 bird.fall(speed);
+                hitTheGround = birdY == bird.getY();
                 speed +=3;
             }
         }
